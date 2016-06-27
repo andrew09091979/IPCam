@@ -1,6 +1,6 @@
 package com.ipcam.soundrecorder;
 
-import java.io.FileDescriptor;
+import java.io.File;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -8,32 +8,53 @@ import java.util.TimerTask;
 import android.media.MediaRecorder;
 import android.util.Log;
 
+import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.helper.FileName;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.task.ITask;
 
-public class SoundRecorderImpl implements ITask<IInternalEventInfo>
+public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
 {
 	private final String TAG = "SoundRecorder";
     private MediaRecorder mRecorder = null;
 	private int recordingTime = 3;
 	private Timer recordingTimer = null;
-	
+    private boolean bRecordingInProcess = false;
+
+    synchronized
+    private boolean lock()
+    {
+    	if (!bRecordingInProcess)
+    	{
+    		bRecordingInProcess = true;
+    	    return true;
+    	}
+    	else
+    	{
+    	    return false;
+    	}
+    }
+    synchronized
+    private void unlock()
+    {
+		bRecordingInProcess = false;
+    }
+
 	@Override
-	public void performTask(IInternalEventInfo info)
+	public void executor(IInternalEventInfo info)
 	{
+		if (!lock())
+		{
+			Log.d(TAG, "Already recording sound");
+			return;
+		}
 	    recordingTime = info.getParameter();
         RecordingTimeFinisedHandler pth = new RecordingTimeFinisedHandler();
         recordingTimer = new Timer();
         recordingTimer.schedule(pth, recordingTime);
+        startRecording();
 	}
 
-	@Override
-	public void stop()
-	{
-		// TODO Auto-generated method stub
-		
-	}
     private void startRecording()
     {
         mRecorder = new MediaRecorder();
@@ -42,7 +63,17 @@ public class SoundRecorderImpl implements ITask<IInternalEventInfo>
         {
 	        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 	        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-	        
+
+	        File adminStorageDir = new File(FileName.AdminConsoleCommandsFilePath());
+
+	        if (! adminStorageDir.exists())
+	        {
+	            if (! adminStorageDir.mkdirs())
+	            {
+	                Log.d(TAG, "SoundRecorderImpl: failed to create directory");
+	                return;
+	            }
+	        }
 	        String mFileName = FileName.AdminConsoleCommandsFilePath() + "AUD_" + FileName.DateTimeFileName() + ".amr";
 			mRecorder.setOutputFile(mFileName );
 	        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -76,6 +107,7 @@ public class SoundRecorderImpl implements ITask<IInternalEventInfo>
         {
         	Log.e(TAG, "SoundRecorderImpl: stopRecording: mRecorder is null");
         }
+        unlock();
     }
 	class RecordingTimeFinisedHandler extends TimerTask
 	{

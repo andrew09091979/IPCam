@@ -438,6 +438,21 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	public void commandAudio()
 	{
 		Log.d(TAG, "commandAudio enter");
+
+	    if (eventHandler != null)
+	    {
+	    	IInternalEventInfo info = new InternalEventInfoImpl(InternalEvent.NEED_TO_RECORD_AMBIENT_SOUND);
+	    	info.setMessage("Recording sound per admin demand");
+	    	info.setHeadline("Recording sound per admin demand");
+	    	info.setResultNotifier(this);
+			info.setParameter(5);
+	    	eventHandler.executeAsync(info);
+	    }
+	    else
+	    {
+	    	Log.e(TAG, "run: eventHandler is null");
+	    }		
+		Log.d(TAG, "commandPhoto finish");
 		Log.d(TAG, "commandAudio finish");
 	}
 	public void commandGetFileList()

@@ -6,8 +6,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.ipcam.task.ITask;
-
 import android.util.Log;
 
 public class AsyncExecutor<T>

@@ -440,10 +440,11 @@ public class CameraActivity extends Activity
     }
     private static File getOutputMediaFile(int type)
     {
+    	String TAG = "IPCam";
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
-    	Log.d("IPCam", "CameraActivity: getOutputMediaFile started");
-    	Log.d("IPCam", "CameraActivity: creating dir: " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) +"/MyCameraApp");
+    	Log.d(TAG, "CameraActivity: getOutputMediaFile started");
+    	Log.d(TAG, "CameraActivity: creating dir: " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) +"/MyCameraApp");
         File mediaStorageDir = new File("/mnt/sdcard/DCIM/MyCameraApp");
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
@@ -453,7 +454,7 @@ public class CameraActivity extends Activity
         {
             if (! mediaStorageDir.mkdirs())
             {
-                Log.d("IPCam", "CameraActivity: failed to create directory");
+                Log.d(TAG, "CameraActivity: failed to create directory");
                 return null;
             }
         }
@@ -464,7 +465,7 @@ public class CameraActivity extends Activity
     
         if (type == MEDIA_TYPE_IMAGE)
         {
-        	Log.d("IPCam", "CameraActivity::getOutputMediaFile creating file:" + mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp);
+        	Log.d(TAG, "CameraActivity::getOutputMediaFile creating file:" + mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp);
             mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp);
             try 
             {
@@ -472,7 +473,7 @@ public class CameraActivity extends Activity
             }
             catch (IOException e)
             {
-            	Log.d("IPCam", "CameraActivity::getOutputMediaFile: IOException while creating file");
+            	Log.d(TAG, "CameraActivity::getOutputMediaFile: IOException while creating file");
             }
         } 
         else if(type == MEDIA_TYPE_VIDEO) 

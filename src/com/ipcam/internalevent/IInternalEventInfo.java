@@ -15,13 +15,13 @@ public interface IInternalEventInfo
     public void setMessage(String message);
     public void setWakeLock(WakeLock wakelock);
     public void setObject(Object obj);
-    public void setResultNotifier(ITask t);
+    public void setResultNotifier(ITask<IInternalEventInfo> t);
     public void addFile(String fullPath);
     public void removeAllFiles();
     public void setParameter(int parameter);
     public String getHeadline();
     public String getMessage();
-    public ITask getResultNotifier();
+    public ITask<IInternalEventInfo> getResultNotifier();
     public void concatToMessage(String str);
     public WakeLock getWakeLock();
     public String getFile(int fileNum);

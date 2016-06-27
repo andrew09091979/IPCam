@@ -29,6 +29,7 @@ import com.ipcam.mailsender.SMTPSender;
 import com.ipcam.photo.CameraActivity;
 import com.ipcam.photo.Photographer;
 import com.ipcam.soundplayer.SoundPlayerImpl;
+import com.ipcam.soundrecorder.SoundRecorderImpl;
 import com.ipcam.task.ITask;
 
 import android.app.AlarmManager;
@@ -40,6 +41,7 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -78,7 +80,8 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     private Photographer photographerInst = null;
     private AsyncExecutor<IInternalEventInfo> mailSenderInst = null;
     private AsyncExecutor<IInternalEventInfo> soundPlayerInst = null;
-    private ITask batteryStatusReceiver = null;
+    private AsyncExecutor<IInternalEventInfo> soundRecorderInst = null;
+    private ITask<IInternalEventInfo> batteryStatusReceiver = null;
     private SensorsReceiver sensorsReceiver = null;
     private static AsyncExecutor<IInternalEventInfo> internalEventHandler = null;
     private HashMap<Integer, TimerTask> job = null;
@@ -184,6 +187,12 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         	soundPlayerInst.stop();
         	soundPlayerInst = null;
         }
+        if (soundRecorderInst != null)
+        {
+        	writeToLog("deactivate: stopping soundRecorderInst");
+        	soundRecorderInst.stop();
+        	soundRecorderInst = null;
+        }
         if (sensorsReceiver != null)
         {
             writeToLog("deactivate: calling sensorsReceiver.unregisterAllListeners");
@@ -242,6 +251,8 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	{
 			internalEventHandlingMethods.put(InternalEvent.NEED_TO_COLLECT_DATA,
 					IPCam.class.getMethod("handleNeedToCollectData", new Class[]{IInternalEventInfo.class}));
+			internalEventHandlingMethods.put(InternalEvent.NEED_TO_RECORD_AMBIENT_SOUND,
+					IPCam.class.getMethod("handleNeedToRecordAmbientSound", new Class[]{IInternalEventInfo.class}));
 			internalEventHandlingMethods.put(InternalEvent.RENEW_BATTERY_LEVEL,
 					IPCam.class.getMethod("handleRenewBatteryLevel", new Class[]{IInternalEventInfo.class}));				
 			internalEventHandlingMethods.put(InternalEvent.NO_BROADCAST_FROM_PHOTO_ACTIVITY,
@@ -291,6 +302,10 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	if (soundPlayerInst == null)
     	{
     		soundPlayerInst = new SoundPlayerImpl(context, alarmAudioFile);
+    	}
+    	if (soundRecorderInst == null)
+    	{
+    		soundRecorderInst = new SoundRecorderImpl();
     	}
     	if (internalEventHandler == null)
     	{
@@ -421,7 +436,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		Log.d(TAG, "IPCam: addServiceInfo: message after adding information: " + info.getMessage());
 	}
 	@Override
-	public void executeAsync(IInternalEventInfo info)
+	public void executor(IInternalEventInfo info)
 	{
 		InternalEvent ev = info.getInternalEvent();
 
@@ -511,7 +526,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		addServiceInfo(info);
 		info.setParameter(3);
 
-		ITask resultNotifier = info.getResultNotifier();
+		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -531,7 +546,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 
 		addServiceInfo(info);
 		info.setParameter(5);
-		ITask resultNotifier = info.getResultNotifier();
+		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -552,7 +567,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		addServiceInfo(info);
 		info.setParameter(5);
 
-		ITask resultNotifier = info.getResultNotifier();
+		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -649,8 +664,26 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		ConnectionHandler ch = new ConnectionHandler(sock, this);
 		ch.start();
 	}
+	public void handleNeedToRecordAmbientSound(IInternalEventInfo info)
+	{
+		Log.d(TAG, "IPCam: handleNeedToRecordAmbientSound");
+
+		if (soundRecorderInst != null)
+		{
+			soundRecorderInst.executeAsync(info);
+		}
+	}
     private void writeToLog(String msg)
     {
+    	File logDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/MyCameraApp/");
+
+    	if (!logDirectory.exists())
+    	{
+    		if(!logDirectory.mkdirs())
+    		{
+    			return;
+    		}
+    	}
     	if (log == null)
     	{
         	String logname = "IPCamServicelog_" + CameraActivity.buildPhotoFileName();
@@ -689,7 +722,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		public void uncaughtException(Thread thread, Throwable ex)
 		{
 			String uncaughtExceptionlogname = "UncaughtExcpt_" + FileName.DateTimeFileName() + ".txt";
-	    	File uncaughtExceptionlog = new File("/mnt/sdcard/MyCameraApp/" + uncaughtExceptionlogname);
+	    	File uncaughtExceptionlog = new File(Environment.getExternalStorageDirectory().getPath() + "/MyCameraApp/" + uncaughtExceptionlogname);
 	        FileOutputStream uncaughtExceptionlogfos = null;
 
 	    	try

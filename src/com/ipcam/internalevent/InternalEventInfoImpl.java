@@ -20,7 +20,7 @@ public class InternalEventInfoImpl implements IInternalEventInfo
     private WakeLock wakeLock = null;
     private int parameter = 0;
     private Object object = null;
-    private ITask resNotifier = null;
+    private ITask<IInternalEventInfo> resNotifier = null;
 
     public InternalEventInfoImpl(InternalEvent ie)
     {
@@ -126,12 +126,12 @@ public class InternalEventInfoImpl implements IInternalEventInfo
 		return object;
 	}
 	@Override
-	public void setResultNotifier(ITask t)
+	public void setResultNotifier(ITask<IInternalEventInfo> t)
 	{
 		resNotifier = t;
 	}
 	@Override
-	public ITask getResultNotifier()
+	public ITask<IInternalEventInfo> getResultNotifier()
 	{
 		return resNotifier;
 	}
