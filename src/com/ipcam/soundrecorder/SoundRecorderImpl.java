@@ -51,7 +51,7 @@ public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
 	    recordingTime = info.getParameter();
         RecordingTimeFinisedHandler pth = new RecordingTimeFinisedHandler();
         recordingTimer = new Timer();
-        recordingTimer.schedule(pth, recordingTime);
+        recordingTimer.schedule(pth, recordingTime * 1000);
         startRecording();
 	}
 

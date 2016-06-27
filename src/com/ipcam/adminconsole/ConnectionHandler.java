@@ -81,8 +81,8 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
     		try
     		{
 				commands.put("photo", ConnectionHandler.class.getMethod("commandPhoto"));
-				commands.put("video", ConnectionHandler.class.getMethod("commandVideo"));
-				commands.put("audio", ConnectionHandler.class.getMethod("commandAudio"));
+				commands.put("recordvideo", ConnectionHandler.class.getMethod("commandRecordVideo"));
+				commands.put("recordsound", ConnectionHandler.class.getMethod("commandRecordSound"));
 				commands.put("filelist", ConnectionHandler.class.getMethod("commandGetFileList"));
 				commands.put("downloadfile", ConnectionHandler.class.getMethod("commandDownloadFile"));
 			}
@@ -430,14 +430,14 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	    }		
 		Log.d(TAG, "commandPhoto finish");
 	}
-	public void commandVideo()
+	public void commandRecordVideo()
 	{
-		Log.d(TAG, "commandVideo enter");
-		Log.d(TAG, "commandVideo finish");
+		Log.d(TAG, "commandRecordVideo enter");
+		Log.d(TAG, "commandRecordVideo finish");
 	}
-	public void commandAudio()
+	public void commandRecordSound()
 	{
-		Log.d(TAG, "commandAudio enter");
+		Log.d(TAG, "commandRecordSound enter");
 
 	    if (eventHandler != null)
 	    {
@@ -452,8 +452,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	    {
 	    	Log.e(TAG, "run: eventHandler is null");
 	    }		
-		Log.d(TAG, "commandPhoto finish");
-		Log.d(TAG, "commandAudio finish");
+		Log.d(TAG, "commandRecordSound finish");
 	}
 	public void commandGetFileList()
 	{
