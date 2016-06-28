@@ -19,6 +19,7 @@ import com.ipcam.adminconsole.NetStateReceiver;
 import com.ipcam.adminconsole.ServerConnector;
 import com.ipcam.battery.BatteryStatusReceiver;
 import com.ipcam.helper.AsyncExecutor;
+import com.ipcam.helper.ServiceStartIntentFactory;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.helper.FileName;
 import com.ipcam.internalevent.InternalEvent;
@@ -122,7 +123,9 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		else
 		{
-			writeToLog("onStartCommand: intent is null");
+			writeToLog("onStartCommand: intent is null, reading settings from prefs");
+			intent = ServiceStartIntentFactory.getServiceStartingIntentWithInfoFromPrefs(cont, "activateWithNullIntent");
+			settings = readSettingsFromIntent(intent);
 		}
 		
 		writeToLog("activate: calling initMethodsMap");
