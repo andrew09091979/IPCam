@@ -17,6 +17,9 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.internalevent.InternalEvent;
@@ -80,11 +83,16 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
     	{
     		try
     		{
-				commands.put("photo", ConnectionHandler.class.getMethod("commandPhoto"));
-				commands.put("recordvideo", ConnectionHandler.class.getMethod("commandRecordVideo"));
-				commands.put("recordsound", ConnectionHandler.class.getMethod("commandRecordSound"));
-				commands.put("filelist", ConnectionHandler.class.getMethod("commandGetFileList"));
-				commands.put("downloadfile", ConnectionHandler.class.getMethod("commandDownloadFile"));
+				commands.put("photo", ConnectionHandler.class.getMethod("commandPhoto",
+						                                                 new Class[]{JSONObject.class}));
+				commands.put("recordvideo", ConnectionHandler.class.getMethod("commandRecordVideo",
+                                                                         new Class[]{JSONObject.class}));
+				commands.put("recordsound", ConnectionHandler.class.getMethod("commandRecordSound",
+                                                                         new Class[]{JSONObject.class}));
+				commands.put("filelist", ConnectionHandler.class.getMethod("commandGetFileList",
+                                                                         new Class[]{JSONObject.class}));
+				commands.put("downloadfile", ConnectionHandler.class.getMethod("commandDownloadFile",
+                                                                         new Class[]{JSONObject.class}));
 			}
     		catch (NoSuchMethodException e)
     		{
@@ -112,46 +120,26 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 
 	    	    if (cmd != null)
 	    	    {
-	    		    Log.d(TAG, "run: received command: " + cmd);
-	    			try
-	    			{
-	    				Method mth = commands.get(cmd);
-
-	    				if (mth != null)
-	    				{
-	    				    Log.d(TAG, "ConnectionHandler: method found, invoking...");		
-	    					mth.invoke(this);
-	    				}
-	    				else
-	    				{
-	    					Log.e(TAG, "ConnectionHandler: internalEventHandlingMethods is " + commands.toString());
-	    					Log.e(TAG, "ConnectionHandler: handler not found, calling initMethodsMap");
-	    					initCommands();
-	    				}
-	    			}
-	    			catch (Exception e)
-	    			{
-	    				Log.e(TAG, "NetworkCommunicationsService: handleEvent: exception while invoking method from methods map: " + e.getMessage());
-	    				e.printStackTrace();
-	    			}
+	    	    	Log.d(TAG, "run: calling parseAndExecute");
+	    	    	extractCommandAndExecute(cmd);
 	    	    }
 	    	    else
 	    	    {
-	    		    Log.d(TAG, "run: received null instead of command, closing in and out setting bExit as true");
-	    	    	bExit = true;
+    			    Log.d(TAG, "run: received null instead of command, closing in and out setting bExit as true");
+    		    	bExit = true;
 
-	    	    	try
-	    	    	{
-		    	    	in.close();
-						out.close();
-						sock.close();
-					}
-	    	    	catch (IOException e)
-	    	    	{
-		    		    Log.d(TAG, "run: exception while closing stream or socket: " + e.getMessage());
-						e.printStackTrace();
-					}
-	    	    }
+    		    	try
+    		    	{
+    	    	    	in.close();
+    					out.close();
+    					sock.close();
+    				}
+    		    	catch (IOException e)
+    		    	{
+    	    		    Log.d(TAG, "run: exception while closing stream or socket: " + e.getMessage());
+    					e.printStackTrace();
+    				}
+    		    }
 	    	}
 	    	else
 	    	{
@@ -200,7 +188,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 				break;
 
 				case READ_MSG_SIZE:
-				{					
+				{
 					Log.d(TAG, "receiveCommand: reading message size");
 					res = read(msg_head, 1, 2);
 					
@@ -302,7 +290,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 		int bytes_remain_to_read = count;
 		int availableToRead = 0;
 		int pause = 100;
-		
+
 		while (!read_finish)
 		{
 			try 
@@ -344,7 +332,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 				
 				--numOfAttempts;
 			}
-			
+
 			if (numOfAttempts <= 0)
 			{
 				Log.d(TAG, "read: numOfAttempts <= 0");
@@ -358,7 +346,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 				res = true;
 			}
 		}
-		
+
 		return res;
 	}
 
@@ -412,7 +400,43 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 			}
 		}
 	}
-	public void commandPhoto()
+	private void extractCommandAndExecute(String cmd)
+	{
+	    Log.d(TAG, "parseAndExecute entered");
+
+	    if (cmd != null)
+	    {
+            try
+            {
+				JSONObject jsonobj = new JSONObject(cmd);
+		        Log.d(TAG, "extractCommandAndExecute: received command: " + cmd);
+		        String strCmd = jsonobj.getString("command");
+				Method mth = commands.get(strCmd);
+
+				if (mth != null)
+				{
+				    Log.d(TAG, "extractCommandAndExecute: method found, invoking...");		
+					mth.invoke(this, jsonobj);
+				}
+				else
+				{
+					Log.e(TAG, "extractCommandAndExecute: internalEventHandlingMethods is " + commands.toString());
+					Log.e(TAG, "extractCommandAndExecute: handler not found, calling initMethodsMap");
+					initCommands();
+				}
+			}
+            catch (JSONException e1)
+            {
+				e1.printStackTrace();
+			}
+			catch (Exception e)
+			{
+				Log.e(TAG, "extractCommandAndExecute: exception while invoking method from methods map: " + e.getMessage());
+				e.printStackTrace();
+			}
+	    }
+	}
+	public void commandPhoto(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandPhoto enter");
 
@@ -430,22 +454,31 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	    }		
 		Log.d(TAG, "commandPhoto finish");
 	}
-	public void commandRecordVideo()
+	public void commandRecordVideo(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandRecordVideo enter");
 		Log.d(TAG, "commandRecordVideo finish");
 	}
-	public void commandRecordSound()
+	public void commandRecordSound(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandRecordSound enter");
+		int recordLength = 5;
 
+        try
+        {
+        	recordLength = jsonObj.getInt("parameter");
+        }
+        catch (JSONException e1)
+        {
+			e1.printStackTrace();
+		}
 	    if (eventHandler != null)
 	    {
 	    	IInternalEventInfo info = new InternalEventInfoImpl(InternalEvent.NEED_TO_RECORD_AMBIENT_SOUND);
 	    	info.setMessage("Recording sound per admin demand");
 	    	info.setHeadline("Recording sound per admin demand");
 	    	info.setResultNotifier(this);
-			info.setParameter(5);
+			info.setParameter(recordLength);
 	    	eventHandler.executeAsync(info);
 	    }
 	    else
@@ -454,12 +487,12 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	    }		
 		Log.d(TAG, "commandRecordSound finish");
 	}
-	public void commandGetFileList()
+	public void commandGetFileList(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandGetFileList enter");
 		Log.d(TAG, "commandGetFileList finish");
 	}
-	public void commandDownloadFile()
+	public void commandDownloadFile(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandDownloadFile enter");
 		Log.d(TAG, "commandDownloadFile finish");
