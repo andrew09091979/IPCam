@@ -308,7 +308,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	}
     	if (soundRecorderInst == null)
     	{
-    		soundRecorderInst = new SoundRecorderImpl();
+    		soundRecorderInst = new SoundRecorderImpl(this);
     	}
     	if (internalEventHandler == null)
     	{

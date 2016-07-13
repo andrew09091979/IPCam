@@ -11,6 +11,8 @@ import android.util.Log;
 import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.helper.FileName;
 import com.ipcam.internalevent.IInternalEventInfo;
+import com.ipcam.internalevent.InternalEvent;
+import com.ipcam.internalevent.InternalEventInfoImpl;
 import com.ipcam.task.ITask;
 
 public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
@@ -20,7 +22,9 @@ public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
 	private int recordingTime = 3;
 	private Timer recordingTimer = null;
     private boolean bRecordingInProcess = false;
-
+    private AsyncExecutor<IInternalEventInfo> eventHandler = null;
+    private String lastRecordingFileFullPath = null;
+    private String lastRecordingFileName = null;
     synchronized
     private boolean lock()
     {
@@ -39,7 +43,10 @@ public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
     {
 		bRecordingInProcess = false;
     }
-
+    public SoundRecorderImpl(AsyncExecutor<IInternalEventInfo> evh)
+    {
+    	eventHandler = evh;
+    }
 	@Override
 	public void executor(IInternalEventInfo info)
 	{
@@ -74,8 +81,9 @@ public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
 	                return;
 	            }
 	        }
-	        String mFileName = FileName.AdminConsoleCommandsFilePath() + "AUD_" + FileName.DateTimeFileName() + ".amr";
-			mRecorder.setOutputFile(mFileName );
+	        lastRecordingFileName = "AUD_" + FileName.DateTimeFileName() + ".amr";
+	        lastRecordingFileFullPath = FileName.AdminConsoleCommandsFilePath() + lastRecordingFileName;
+			mRecorder.setOutputFile(lastRecordingFileFullPath);
 	        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 	
 	        try
@@ -108,6 +116,15 @@ public class SoundRecorderImpl extends AsyncExecutor<IInternalEventInfo>
         	Log.e(TAG, "SoundRecorderImpl: stopRecording: mRecorder is null");
         }
         unlock();
+		if (eventHandler != null)
+		{
+			IInternalEventInfo info = new InternalEventInfoImpl(InternalEvent.NOTIFY_USER);
+			info.setHeadline(lastRecordingFileName);
+			info.setMessage(lastRecordingFileName);
+			info.addFile(lastRecordingFileFullPath);
+        	Log.e(TAG, "SoundRecorderImpl: sending NOTIFY_USER");
+			eventHandler.executeAsync(info);
+		}
     }
 	class RecordingTimeFinisedHandler extends TimerTask
 	{

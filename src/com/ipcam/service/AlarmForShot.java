@@ -33,7 +33,7 @@ public class AlarmForShot extends BroadcastReceiver
 
 		if (photoEventHandler != null)
 		{
-    	    Log.d(TAG, "AlarmForShot: calling takePicture");
+    	    Log.d(TAG, "AlarmForShot: calling executeAsync for message NEED_TO_COLLECT_DATA");
     	    photoEventHandler.executeAsync(new InternalEventInfoImpl(InternalEvent.NEED_TO_COLLECT_DATA));
 		}
 		else

@@ -174,7 +174,7 @@ public class Photographer extends BroadcastReceiver implements ITask<IInternalEv
 			info.setHeadline(photoFileName);
 	        info.removeAllFiles();
 			info.addFile(photoFilePath);
-			info.setMessage("Shot " + photoFileName + " was taken per timer");
+			info.setMessage("Shot " + photoFileName);
 		}
 		else
 		{

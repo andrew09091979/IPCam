@@ -439,13 +439,23 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	public void commandPhoto(JSONObject jsonObj)
 	{
 		Log.d(TAG, "commandPhoto enter");
+		int photoQuality = 1;
 
+        try
+        {
+        	photoQuality = jsonObj.getInt("parameter");
+        }
+        catch (JSONException e1)
+        {
+			e1.printStackTrace();
+		}
 	    if (eventHandler != null)
 	    {
 	    	IInternalEventInfo info = new InternalEventInfoImpl(InternalEvent.NEED_TO_COLLECT_DATA);
 	    	info.setMessage("Taking shot per admin demand");
 	    	info.setHeadline("Taking shot per admin demand");
-	    	info.setResultNotifier(this);
+	    	//info.setResultNotifier(this);
+	    	info.setParameter(photoQuality);
 	    	eventHandler.executeAsync(info);
 	    }
 	    else
