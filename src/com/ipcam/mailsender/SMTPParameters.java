@@ -1,6 +1,5 @@
 package com.ipcam.mailsender;
 
-import com.ipcam.internalevent.IInternalEventInfo;
 
 public class SMTPParameters
 {

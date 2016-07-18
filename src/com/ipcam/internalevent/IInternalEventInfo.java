@@ -1,7 +1,5 @@
 package com.ipcam.internalevent;
 
-import java.io.File;
-
 import com.ipcam.task.ITask;
 
 import android.os.PowerManager.WakeLock;

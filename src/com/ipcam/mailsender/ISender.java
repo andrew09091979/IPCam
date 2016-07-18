@@ -1,15 +1,13 @@
 package com.ipcam.mailsender;
 
-import com.ipcam.internalevent.IInternalEventInfo;
-
-public interface ISender
+public interface ISender<T>
 {
-	public enum SEND_LETTER_RESULT
+	public enum SEND_RESULT
 	{
 		SUCCESS,
 		SERVER_ERROR,
 		NETWORK_ERROR,
 		UNKNOWN
 	}	
-	public SEND_LETTER_RESULT sendLetter(IInternalEventInfo letterToSend_);
+	public SEND_RESULT send(T letterToSend_);
 }

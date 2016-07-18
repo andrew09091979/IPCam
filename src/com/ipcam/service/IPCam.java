@@ -24,9 +24,10 @@ import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.helper.FileName;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;
-import com.ipcam.mailsender.MailSenderImpl;
+import com.ipcam.mailsender.AsyncMessageSender;
 import com.ipcam.mailsender.SMTPParameters;
 import com.ipcam.mailsender.SMTPSender;
+import com.ipcam.mailsender.ResultReporterForInternalEvent;
 import com.ipcam.photo.CameraActivity;
 import com.ipcam.photo.Photographer;
 import com.ipcam.soundplayer.SoundPlayerImpl;
@@ -51,7 +52,6 @@ import android.util.Log;
 public class IPCam extends AsyncExecutor<IInternalEventInfo>
 {
     private final String TAG = "IPCam";
-    private final Handler mHandler = new Handler();
     private final String shotIntentName = "com.example.ipcam.phototaken";
 
     private String PERIOD_TO_TAKE_PHOTO_SETTING_NAME;
@@ -118,52 +118,52 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		if (intent != null)
 		{
 		    Log.d(TAG, "onStartCommand: calling readSettingsFromIntent");
-		    writeToLog("onStartCommand: calling readSettingsFromIntent");
+		    ////writeToLog("onStartCommand: calling readSettingsFromIntent");
 		    settings = readSettingsFromIntent(intent);
 		}
 		else
 		{
-			writeToLog("onStartCommand: intent is null, reading settings from prefs");
+			////writeToLog("onStartCommand: intent is null, reading settings from prefs");
 			intent = ServiceStartIntentFactory.getServiceStartingIntentWithInfoFromPrefs(cont, "activateWithNullIntent");
 			settings = readSettingsFromIntent(intent);
 		}
 		
-		writeToLog("activate: calling initMethodsMap");
+		////writeToLog("activate: calling initMethodsMap");
 		initMethodsMap();
-		writeToLog("activate: calling startAll");
+		////writeToLog("activate: calling startAll");
 		startAll(settings);
 	}
     public void deactivate()
     {
     	Log.d(TAG, "deactivate");
-        writeToLog("deactivate");
+        ////writeToLog("deactivate");
 
     	if (serverConnector != null)
     	{
     		Log.d(TAG, "deactivate: closing server socket");
-            writeToLog("deactivate: closing serverConnector");
+            ////writeToLog("deactivate: closing serverConnector");
 		    serverConnector.close();
 		    serverConnector = null;
     	}
     	if (netStateReceiver != null)
     	{
-            writeToLog("deactivate: unregistering netStateReceiver");
+            ////writeToLog("deactivate: unregistering netStateReceiver");
             context.unregisterReceiver(netStateReceiver);
     		netStateReceiver = null;
     	}
         if (shotRecvr != null)
         {
-            writeToLog("deactivate: unregistering shotRecvr");
+            ////writeToLog("deactivate: unregistering shotRecvr");
             context.unregisterReceiver(shotRecvr);
         }
         if (batteryStatusReceiver != null)
         {
-            writeToLog("deactivate: setting batteryStatusReceiver to null");
+            ////writeToLog("deactivate: setting batteryStatusReceiver to null");
         	batteryStatusReceiver = null;
         }        
 		if (alarmManager != null)
 		{
-            writeToLog("deactivate: cancelling AlarmForShot");
+            ////writeToLog("deactivate: cancelling AlarmForShot");
             Intent intent1 = new Intent(context, AlarmForShot.class);
 	        Log.d(TAG, "deactivate: creating PendingIntent");
 	        intentToShot = PendingIntent.getBroadcast(context, 0, intent1, 0);
@@ -173,32 +173,32 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         if (photographerInst != null)
         {
         	photographerInst.stop();
-            writeToLog("deactivate: unregistering photographerInst");
+            ////writeToLog("deactivate: unregistering photographerInst");
         	Log.d(TAG, "Unregistering photographerInst");
         	context.unregisterReceiver((BroadcastReceiver)photographerInst);
         	photographerInst = null;
         }
         if (mailSenderInst != null)
         {
-            writeToLog("deactivate: stopping mailSenderInst");
+            ////writeToLog("deactivate: stopping mailSenderInst");
         	mailSenderInst.stop();
         	mailSenderInst = null;
         }
         if (soundPlayerInst != null)
         {
-            writeToLog("deactivate: stopping soundPlayerInst");
+            ////writeToLog("deactivate: stopping soundPlayerInst");
         	soundPlayerInst.stop();
         	soundPlayerInst = null;
         }
         if (soundRecorderInst != null)
         {
-        	writeToLog("deactivate: stopping soundRecorderInst");
+        	////writeToLog("deactivate: stopping soundRecorderInst");
         	soundRecorderInst.stop();
         	soundRecorderInst = null;
         }
         if (sensorsReceiver != null)
         {
-            writeToLog("deactivate: calling sensorsReceiver.unregisterAllListeners");
+            ////writeToLog("deactivate: calling sensorsReceiver.unregisterAllListeners");
         	sensorsReceiver.unregisterAllListeners();
         	sensorsReceiver = null;
         }
@@ -249,7 +249,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     {
     	internalEventHandlingMethods = new HashMap<InternalEvent, Method>();
 
-        writeToLog("initMethodsMap: filling internalEventHandlingMethods map");
+        ////writeToLog("initMethodsMap: filling internalEventHandlingMethods map");
     	try
     	{
 			internalEventHandlingMethods.put(InternalEvent.NEED_TO_COLLECT_DATA,
@@ -276,30 +276,30 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
     	catch (NoSuchMethodException e)
     	{
-    		writeToLog("initMethodsMap: exception while adding reference to method into the map: " + e.getMessage());
+    		////writeToLog("initMethodsMap: exception while adding reference to method into the map: " + e.getMessage());
     		Log.e(TAG, "initMethodsMap: exception while adding reference to method into the map: " + e.getMessage());
 			e.printStackTrace();
 		}
     }
 	private void startAll(Map<String, String> settings)
 	{
-    	writeToLog("startAll");
+    	////writeToLog("startAll");
 
         if (netIntentFilter == null)
         {
-        	writeToLog("startAll: creating netIntentFilter");
+        	////writeToLog("startAll: creating netIntentFilter");
         	netIntentFilter = new IntentFilter();
         	netIntentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         }
         if (shotIntentFilter == null)
         {
-        	writeToLog("startAll: creating shotIntentFilter");
+        	////writeToLog("startAll: creating shotIntentFilter");
         	shotIntentFilter = new IntentFilter();
         	shotIntentFilter.addAction(shotIntentName);
         }
     	if (photographerInst == null)
     	{
-        	writeToLog("startAll: creating photographerInst");
+        	////writeToLog("startAll: creating photographerInst");
     		photographerInst = new Photographer(context, this);
     	}
     	if (soundPlayerInst == null)
@@ -312,25 +312,25 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	}
     	if (internalEventHandler == null)
     	{
-        	writeToLog("startAll: setting interalEventHandler to this");
+        	////writeToLog("startAll: setting interalEventHandler to this");
     		internalEventHandler = this;
     	}
     	if (alarmManager == null)
     	{
     		Log.d(TAG, "initializing alarmManager");
-        	writeToLog("startAll: initializing alarmManager");
+        	////writeToLog("startAll: initializing alarmManager");
     		alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
     	}
     	if (powerManager == null)
     	{
     	    Log.d(TAG, "initializing powerManager");
-        	writeToLog("startAll: initializing powerManager");
+        	////writeToLog("startAll: initializing powerManager");
     		powerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
     	}
     	if (sensorsReceiver == null)
     	{
     		Log.d(TAG, "initializing sensorsReceiver");
-        	writeToLog("startAll: initializing sensorsReceiver");
+        	////writeToLog("startAll: initializing sensorsReceiver");
     		sensorsReceiver = new SensorsReceiver(context, this);
     		sensorsReceiver.registerAllListeners();
     	}
@@ -341,55 +341,56 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 //        		   "  shotAlarmPeriod = " + Integer.toString(shotAlarmPeriod));
     	if (mailSenderInst == null)
     	{
-        	writeToLog("startAll: creating SMTPParameters");
+        	////writeToLog("startAll: creating SMTPParameters");
     		SMTPParameters smtpParameters = new SMTPParameters(settings.get(MAIL_PORTAL_SETTING_NAME),
 											    				settings.get(MAIL_LOGIN_SETTING_NAME),
 											    				settings.get(MAIL_PASSWORD_SETTING_NAME),
 											    				settings.get(MAIL_BOX_TO_SEND_TO_SETTING_NAME),
 											    				settings.get(SMTP_SERVER_ADDR_SETTING_NAME),
 											    				settings.get(SMTP_SERVER_PORT_SETTING_NAME));
-        	writeToLog("startAll: creating MailSenderImpl");
-    		mailSenderInst = new MailSenderImpl(this, new SMTPSender(smtpParameters));
+        	////writeToLog("startAll: creating MailSenderImpl");
+    		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new ResultReporterForInternalEvent<IInternalEventInfo>(this),
+    				                                                                        new SMTPSender(smtpParameters));
     	}
     	if (photographerInst != null)
     	{
-        	writeToLog("startAll: registering photographerInst as BroadcastReceiver");
+        	////writeToLog("startAll: registering photographerInst as BroadcastReceiver");
         	context.registerReceiver((BroadcastReceiver)photographerInst, shotIntentFilter);
     	}
         if (netStateReceiver == null)
         {
-        	writeToLog("startAll: creating netStateReceiver");
+        	////writeToLog("startAll: creating netStateReceiver");
         	netStateReceiver = new NetStateReceiver(this);
         	context.registerReceiver(netStateReceiver, netIntentFilter);
         }
         if (batteryStatusReceiver == null)
         {
-        	writeToLog("startAll: creating batteryStatusReceiver");
+        	////writeToLog("startAll: creating batteryStatusReceiver");
         	batteryStatusReceiver = new BatteryStatusReceiver(context);
         }
         if (alarmManager != null)
         {
             Log.d(TAG, "startAll: alarmManager is not null, creating Intent");
-        	writeToLog("startAll: alarmManager is not null, creating Intent");
+        	//writeToLog("startAll: alarmManager is not null, creating Intent");
             Intent intent1 = new Intent(context, AlarmForShot.class);
 	        Log.d(TAG, "creating PendingIntent");
-        	writeToLog("startAll: creating PendingIntent");
+        	//writeToLog("startAll: creating PendingIntent");
 	        intentToShot = PendingIntent.getBroadcast(context, 0, intent1, 0);
 	        Log.d(TAG, "startAll: calling setRepeating");
-        	writeToLog("startAll: calling setRepeating");
+        	//writeToLog("startAll: calling setRepeating");
 	        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
 	        		                  shotAlarmPeriod * 60 * 1000, intentToShot);
         }
         else
         {
-        	writeToLog("startAll: error alarmManager is null");
+        	//writeToLog("startAll: error alarmManager is null");
         	Log.e(TAG, "startAll: alarmManager is null");
         }
         if (powerManager != null)
         {
-        	writeToLog("startAll: powerManager is not null (nothing to do yet)");
+        	//writeToLog("startAll: powerManager is not null (nothing to do yet)");
         }
-        writeToLog("startAll: setting internalEventHandler to this");
+        //writeToLog("startAll: setting internalEventHandler to this");
     	internalEventHandler = this;
 	}
 	private void startTakingShot(IInternalEventInfo info)
@@ -415,13 +416,13 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 			}
 			else
 			{
-	    		writeToLog("IPCam: triggerTakingShot photographerInst is null");
+	    		//writeToLog("IPCam: triggerTakingShot photographerInst is null");
 				Log.e(TAG, "IPCam: triggerTakingShot photographerInst is null");
 			}
     	}
     	else
     	{
-    		writeToLog("IPCam: triggerTakingShot powerManager is null");
+    		//writeToLog("IPCam: triggerTakingShot powerManager is null");
     		Log.e(TAG, "IPCam: triggerTakingShot powerManager is null");
     	}
 	}
@@ -456,8 +457,8 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 			}
 			else
 			{
-	    		writeToLog("IPCam: internalEventHandlingMethods is " + internalEventHandlingMethods.toString());
-	    		writeToLog("IPCam: handler not found, calling initMethodsMap");
+	    		//writeToLog("IPCam: internalEventHandlingMethods is " + internalEventHandlingMethods.toString());
+	    		//writeToLog("IPCam: handler not found, calling initMethodsMap");
 				Log.e(TAG, "IPCam: internalEventHandlingMethods is " + internalEventHandlingMethods.toString());
 				Log.e(TAG, "IPCam: handler not found, calling initMethodsMap");
 				initMethodsMap();
@@ -465,19 +466,19 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		catch (IllegalAccessException e)
 		{
-    		writeToLog("IPCam: handleEvent: IllegalAccessException while invoking method from methods map: " + e.getMessage());
+    		//writeToLog("IPCam: handleEvent: IllegalAccessException while invoking method from methods map: " + e.getMessage());
 			Log.e(TAG, "IPCam: handleEvent: IllegalAccessException while invoking method from methods map: " + e.getMessage());
 			e.printStackTrace();
 		}
 		catch (IllegalArgumentException e)
 		{
-    		writeToLog("IPCam: handleEvent: IllegalArgumentException while invoking method from methods map: " + e.getMessage());
+    		//writeToLog("IPCam: handleEvent: IllegalArgumentException while invoking method from methods map: " + e.getMessage());
 			Log.e(TAG, "IPCam: handleEvent: IllegalArgumentException while invoking method from methods map: " + e.getMessage());
 			e.printStackTrace();
 		}
 		catch (InvocationTargetException e)
 		{
-    		writeToLog("IPCam: handleEvent: InvocationTargetException while invoking method from methods map: " + e.getMessage());
+    		//writeToLog("IPCam: handleEvent: InvocationTargetException while invoking method from methods map: " + e.getMessage());
 			Log.e(TAG, "IPCam: handleEvent: InvocationTargetException while invoking method from methods map: " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -495,7 +496,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	}
     	else
     	{
-    		writeToLog("IPCam: handleNeedToTakePhoto batteryStatusReceiver is null");
+    		//writeToLog("IPCam: handleNeedToTakePhoto batteryStatusReceiver is null");
     		Log.e(TAG, "IPCam: handleNeedToTakePhoto batteryStatusReceiver is null");
     	}    	
 	}
@@ -513,14 +514,14 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         	}
         	catch (Exception e)
         	{
-        		writeToLog("IPCam: handleNoBroadcastFromPhotoActivity exception while unregistering photographerInst: " + e.getMessage());
+        		//writeToLog("IPCam: handleNoBroadcastFromPhotoActivity exception while unregistering photographerInst: " + e.getMessage());
             	Log.e(TAG, "IPCam: handleNoBroadcastFromPhotoActivity exception while unregistering photographerInst: " + e.getMessage());
         	}
         	photographerInst = null;
         }
         else
         {
-    		writeToLog("IPCam: handleNoBroadcastFromPhotoActivity photographerInst is null");
+    		//writeToLog("IPCam: handleNoBroadcastFromPhotoActivity photographerInst is null");
         	Log.e(TAG, "IPCam: handleNoBroadcastFromPhotoActivity photographerInst is null");
         }
 		photographerInst = new Photographer(context, this);
@@ -589,7 +590,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         }
         else
         {
-    		writeToLog("IPCam: handleNeedToNotifyUserUrgently soundPlayerInst is null");
+    		//writeToLog("IPCam: handleNeedToNotifyUserUrgently soundPlayerInst is null");
         	Log.e(TAG, "IPCam: handleNeedToNotifyUserUrgently soundPlayerInst is null");
         }
 	}
@@ -653,7 +654,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		else
 		{
-    		writeToLog("IPCam: handleTaskComplete screenLock is null");
+    		//writeToLog("IPCam: handleTaskComplete screenLock is null");
 			Log.e(TAG, "IPCam: handleTaskComplete screenLock is null");
 		}
 	}
@@ -676,6 +677,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 			soundRecorderInst.executeAsync(info);
 		}
 	}
+/*
     private void writeToLog(String msg)
     {
     	File logDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/MyCameraApp/");
@@ -718,6 +720,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 			e.printStackTrace();
 		}
     }
+*/
     public class IPCamUncaughtExceptionHandler implements UncaughtExceptionHandler
     {
 

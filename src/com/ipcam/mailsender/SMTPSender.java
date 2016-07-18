@@ -19,7 +19,7 @@ import com.ipcam.internalevent.IInternalEventInfo;
 import android.util.Base64;
 import android.util.Log;
 
-public class SMTPSender implements ISender
+public class SMTPSender implements ISender<IInternalEventInfo>
 {
 	private final int    SO_TIMEOUT = 40000;
 	private final int    CONN_TIMEOUT = 10000;
@@ -38,13 +38,12 @@ public class SMTPSender implements ISender
     {
     	letter = letterToSend_;
     }
-	public SEND_LETTER_RESULT sendLetter(IInternalEventInfo letterToSend_)
+	public SEND_RESULT send(IInternalEventInfo letterToSend_)
 	{
-		SEND_LETTER_RESULT result = SEND_LETTER_RESULT.UNKNOWN;
+		SEND_RESULT result = SEND_RESULT.UNKNOWN;
 		DataOutputStream os = null;
 		DataInputStream is = null;
 		String filePathToSend = null;
-		File fileToSend = null;
 		InetSocketAddress InetAddrConnTo = null;
 
     	Log.d(TAG, "SMTPSender: sendLetter started, creating FSM");
@@ -60,7 +59,6 @@ public class SMTPSender implements ISender
 		else
 		{
 		    Log.d(TAG, "SMTPSender: sending file " + filePathToSend);
-		    fileToSend = new File(filePathToSend);
 		}
 		
 		if (InetAddrConnTo == null)
@@ -78,7 +76,7 @@ public class SMTPSender implements ISender
 			{
 				e.printStackTrace();
 				Log.e(TAG, "Exception in new InetSocketAddress: " + e.getMessage());
-            	result = SEND_LETTER_RESULT.UNKNOWN;
+            	result = SEND_RESULT.UNKNOWN;
             	return result;
 			}
 		}
@@ -125,21 +123,21 @@ public class SMTPSender implements ISender
 	        	while(processingResult == 0);
 
                 if (processingResult == 1)
-                	result = SEND_LETTER_RESULT.SUCCESS;
+                	result = SEND_RESULT.SUCCESS;
                 else if (processingResult == -1)
-                	result = SEND_LETTER_RESULT.SERVER_ERROR;
+                	result = SEND_RESULT.SERVER_ERROR;
                 else
-                	result = SEND_LETTER_RESULT.UNKNOWN;
+                	result = SEND_RESULT.UNKNOWN;
 	        }
         }
         catch(UnknownHostException e)
         {
-            result = SEND_LETTER_RESULT.NETWORK_ERROR;        	
+            result = SEND_RESULT.NETWORK_ERROR;        	
         	Log.e(TAG,"UnknownHostException: " + e.getMessage());
         }
         catch(IOException e)
         {
-            result = SEND_LETTER_RESULT.NETWORK_ERROR;
+            result = SEND_RESULT.NETWORK_ERROR;
         	Log.e(TAG,"IOException: " + e.getMessage());
         }
 		try 

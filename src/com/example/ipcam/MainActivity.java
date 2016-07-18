@@ -49,7 +49,7 @@ public class MainActivity extends ActionBarActivity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		writeToLog("MainActivity: onCreate");
+		////writeToLog("MainActivity: onCreate");
     	Log.d(TAG, "MainActivity: onCreate");
     	
     	final Button startServBtn = (Button)findViewById(R.id.button1);
@@ -130,7 +130,7 @@ public class MainActivity extends ActionBarActivity
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
     	Log.d(TAG, "MainActivity: onCreateOptionsMenu");
-		writeToLog("MainActivity: onCreateOptionsMenu");
+		////writeToLog("MainActivity: onCreateOptionsMenu");
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
@@ -140,10 +140,10 @@ public class MainActivity extends ActionBarActivity
 	{
 		super.onDestroy();
     	Log.d(TAG, "MainActivity: onDestroy");
-		writeToLog("MainActivity: onDestroy");
+		////writeToLog("MainActivity: onDestroy");
     	try
     	{
-    		writeToLog("onDestroy: closing logfos");
+    		////writeToLog("onDestroy: closing logfos");
 
     		if (logfos != null)
 			    logfos.close();
@@ -159,28 +159,28 @@ public class MainActivity extends ActionBarActivity
 	public void onResume()
 	{
 		super.onResume();
-		writeToLog("MainActivity: onResume");
+		////writeToLog("MainActivity: onResume");
     	Log.d(TAG, "MainActivity: onResume");
 	}
 	@Override
 	public void onPause()
 	{
 		super.onPause();
-		writeToLog("MainActivity: onPause");
+		////writeToLog("MainActivity: onPause");
     	Log.d(TAG, "MainActivity: onPause");
 	}
 	@Override
 	public void onStop()
 	{
 		super.onStop();
-		writeToLog("MainActivity: onStop");
+		//writeToLog("MainActivity: onStop");
     	Log.d(TAG, "MainActivity: onStop");
 	}
 	@Override
 	public void onStart()
 	{
 		super.onStart();
-		writeToLog("MainActivity: onStart");
+		//writeToLog("MainActivity: onStart");
     	Log.d(TAG, "MainActivity: onStart");
 	}
 	@Override
@@ -248,6 +248,7 @@ public class MainActivity extends ActionBarActivity
     	Log.d(TAG, "stoppingService");
     	stopService(intent);
 	}
+/*
     private void writeToLog(String msg)
     {
     	if (log == null)
@@ -281,4 +282,5 @@ public class MainActivity extends ActionBarActivity
 			e.printStackTrace();
 		}
     }
+*/
 }

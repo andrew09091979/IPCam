@@ -386,8 +386,8 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 		    		Log.d(TAG, "performTask: writing file");
 					out.write(pic);
 					pic = null;
-		    		Log.d(TAG, "performTask: closing socket");
-				    sock.close();
+		    		//Log.d(TAG, "performTask: closing socket");
+				    //sock.close();
 		    	}
 			}
 			catch (FileNotFoundException e)
