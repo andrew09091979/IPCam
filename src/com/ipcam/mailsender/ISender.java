@@ -10,4 +10,5 @@ public interface ISender<T>
 		UNKNOWN
 	}	
 	public SEND_RESULT send(T letterToSend_);
+	public void injectIOStreamProvider(IIOStreamProvider iosp);
 }

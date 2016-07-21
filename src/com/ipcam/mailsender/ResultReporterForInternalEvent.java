@@ -5,9 +5,9 @@ import android.util.Log;
 import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.internalevent.InternalEvent;
-import com.ipcam.mailsender.IResultReporter;
+import com.ipcam.mailsender.IDataToSendTreatment;
 
-public class ResultReporterForInternalEvent<TDataToSend> implements IResultReporter<TDataToSend>
+public class ResultReporterForInternalEvent<TDataToSend> implements IDataToSendTreatment<TDataToSend>
 {
 	private final String TAG = "AsyncMessageSender";
 	private AsyncExecutor<IInternalEventInfo> resultHandler = null;
@@ -36,5 +36,11 @@ public class ResultReporterForInternalEvent<TDataToSend> implements IResultRepor
 			Log.e(TAG, "ResultReporterForInternalEvent: reportResult error resultHandler is null");
 		}
 	}
-
+	@Override
+	public void addString(TDataToSend data, String str)
+	{
+		IInternalEventInfo result = (IInternalEventInfo) data;
+		result.concatToMessage(str);
+	}
+    
 }

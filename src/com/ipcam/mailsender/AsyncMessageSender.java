@@ -10,11 +10,11 @@ public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncE
     private ISender<TDataToSend> sender = null;
     private int networkFailCounter = 0;
     private int serverFailCounter = 0;
-    private IResultReporter<TDataToSend> resultReporter = null;
+    private IDataToSendTreatment<TDataToSend> dataTreatment = null;
 
-    public AsyncMessageSender(IResultReporter<TDataToSend> rh, ISender<TDataToSend> ls)
+    public AsyncMessageSender(IDataToSendTreatment<TDataToSend> dt, ISender<TDataToSend> ls)
     {
-    	resultReporter = rh;
+    	dataTreatment = dt;
     	sender = ls;
     }
     @Override
@@ -28,7 +28,15 @@ public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncE
 		ISender.SEND_RESULT res = ISender.SEND_RESULT.UNKNOWN;
 
         int maxAttemptsToSend = 5;//infoForLetter.getParameter();
-        //infoForLetter.concatToMessage("\nNetwork failures: " + networkFailCounter + "; Server failures: " + serverFailCounter);
+
+        if ((dataTreatment != null) || (infoForLetter != null))
+        {
+            dataTreatment.addString(infoForLetter, "\nNetwork failures: " + networkFailCounter + "; Server failures: " + serverFailCounter);
+        }
+        else
+        {
+        	Log.e(TAG, "can't add string dataTreatment or infoForLetter is null");
+        }
         int attemptsToSend = 0;
         res = ISender.SEND_RESULT.UNKNOWN;
 
@@ -69,9 +77,9 @@ public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncE
         	Log.e(TAG, "AsyncMessageSender: network error networkFailCounter = " + Integer.toString(networkFailCounter));
         }
 
-        if ((resultReporter != null) && (infoForLetter != null)) 
+        if ((dataTreatment != null) && (infoForLetter != null)) 
         {
-            resultReporter.reportResult(infoForLetter, res);//report sending result to IPCam
+            dataTreatment.reportResult(infoForLetter, res);//report sending result to IPCam
         }
         else
         {

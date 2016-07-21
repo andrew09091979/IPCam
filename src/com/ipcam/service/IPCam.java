@@ -25,9 +25,11 @@ import com.ipcam.helper.FileName;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;
 import com.ipcam.mailsender.AsyncMessageSender;
+import com.ipcam.mailsender.ISender;
 import com.ipcam.mailsender.SMTPParameters;
 import com.ipcam.mailsender.SMTPSender;
 import com.ipcam.mailsender.ResultReporterForInternalEvent;
+import com.ipcam.mailsender.SSLIOStreamProvider;
 import com.ipcam.photo.CameraActivity;
 import com.ipcam.photo.Photographer;
 import com.ipcam.soundplayer.SoundPlayerImpl;
@@ -349,8 +351,10 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 											    				settings.get(SMTP_SERVER_ADDR_SETTING_NAME),
 											    				settings.get(SMTP_SERVER_PORT_SETTING_NAME));
         	////writeToLog("startAll: creating MailSenderImpl");
+    		ISender<IInternalEventInfo> smtpSender = new SMTPSender(smtpParameters);
+    		smtpSender.injectIOStreamProvider(new SSLIOStreamProvider(smtpParameters.getSmtpServerAddr(), smtpParameters.getSmtpServerPort()));
     		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new ResultReporterForInternalEvent<IInternalEventInfo>(this),
-    				                                                                        new SMTPSender(smtpParameters));
+    				                                                                        smtpSender);
     	}
     	if (photographerInst != null)
     	{

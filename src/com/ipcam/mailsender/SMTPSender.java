@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -21,14 +23,12 @@ import android.util.Log;
 
 public class SMTPSender implements ISender<IInternalEventInfo>
 {
-	private final int    SO_TIMEOUT = 40000;
-	private final int    CONN_TIMEOUT = 10000;
 	private final String TAG = "SMTPSender";
 	
 	private SMTPParameters mySMTPparams = null;
-	private SSLSocket sslsocket = null;
 	private IInternalEventInfo letter = null;
 	private boolean eraseFileAfterSuccessfulSending = false;
+    private IIOStreamProvider ioStreamProvider = null; 
 
 	public SMTPSender(SMTPParameters mySMTPparams_)
 	{
@@ -38,6 +38,12 @@ public class SMTPSender implements ISender<IInternalEventInfo>
     {
     	letter = letterToSend_;
     }
+	@Override
+	public void injectIOStreamProvider(IIOStreamProvider iosp)
+	{
+		ioStreamProvider = iosp;
+	}
+	@Override
 	public SEND_RESULT send(IInternalEventInfo letterToSend_)
 	{
 		SEND_RESULT result = SEND_RESULT.UNKNOWN;
@@ -61,42 +67,31 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 		    Log.d(TAG, "SMTPSender: sending file " + filePathToSend);
 		}
 		
-		if (InetAddrConnTo == null)
-		{
-			try
-			{
-				InetAddrConnTo = new InetSocketAddress(mySMTPparams.getSmtpServerAddr(), Integer.parseInt(mySMTPparams.getSmtpServerPort()));
-
-				if (InetAddrConnTo == null)
-				{
-					Log.e(TAG, "new InetSocketAddress returned null");
-				}
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				Log.e(TAG, "Exception in new InetSocketAddress: " + e.getMessage());
-            	result = SEND_RESULT.UNKNOWN;
-            	return result;
-			}
-		}
-		
         try
         {
-	        SSLSocketFactory factory=(SSLSocketFactory) SSLSocketFactory.getDefault();
-	        sslsocket=(SSLSocket) factory.createSocket();
+        	if (ioStreamProvider != null)
+        	{
+        		OutputStream outputStream = ioStreamProvider.getOutputStream();
+        		InputStream inputStream = ioStreamProvider.getInputStream();
 
-	        if (sslsocket != null)
+        		if ((outputStream != null) || (inputStream != null))
+        		{
+	                os=new DataOutputStream(outputStream);
+	                is=new DataInputStream(inputStream);
+        		}
+        		else
+        		{
+        			Log.e(TAG, "ioStreamProvider returned null as output or input stream");
+        		}
+        	}
+        	else
+        	{
+    			Log.e(TAG, "ioStreamProvider is null");
+        	}
+    		if ((is != null) || (os != null))
 	        {
-	        	Log.d(TAG, "sslsocket is not null");
-	        	sslsocket.setUseClientMode(true);
-	            sslsocket.connect(InetAddrConnTo, CONN_TIMEOUT);        	
-	            os=new DataOutputStream(sslsocket.getOutputStream());
-	            is=new DataInputStream(sslsocket.getInputStream());
-	            sslsocket.setSoTimeout(SO_TIMEOUT);
+	        	Log.d(TAG, "streams are not null");
 	            int avail = is.available();
-	
-	            Log.d(TAG, "available to read " + Integer.toString(avail) + " bytes");
 	
 	        	byte bfr[] = new byte[5000];
 	    		avail = is.read(bfr);
@@ -140,21 +135,14 @@ public class SMTPSender implements ISender<IInternalEventInfo>
             result = SEND_RESULT.NETWORK_ERROR;
         	Log.e(TAG,"IOException: " + e.getMessage());
         }
-		try 
+		if (ioStreamProvider != null)
 		{
-        	Log.d(TAG, "closing os, is, sslsocket");
-
-	        if (os != null)
-				os.close();
-            if (is != null)
-            	is.close();
-            if (sslsocket != null)
-                sslsocket.close();
+			Log.d(TAG, "calling ioStreamProvider.closeAll");
+			ioStreamProvider.closeAll();
 		}
-		catch (IOException e) 
+		else
 		{
-		    e.printStackTrace();
-		    Log.e(TAG,"IOException while closing communications");
+			Log.e(TAG, "ioStreamProvider is null, can't call closeAll");
 		}
         Log.d(TAG, "sendLetter return=" + result.toString());
 
