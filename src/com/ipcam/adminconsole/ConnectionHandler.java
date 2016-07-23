@@ -47,9 +47,6 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	}
 	private final byte START_BYTE = '#';
 	private final String TAG = "ConnectionHandler";
-    private Lock lock = new ReentrantLock();
-    private Condition notFull = lock.newCondition();
-    private Condition notEmpty = lock.newCondition();
 	private AsyncExecutor<IInternalEventInfo> eventHandler = null;
     private Socket sock = null;
     private boolean bExit = false;

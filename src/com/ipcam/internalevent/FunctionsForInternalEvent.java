@@ -1,18 +1,17 @@
-package com.ipcam.mailsender;
+package com.ipcam.internalevent;
 
 import android.util.Log;
 
+import com.ipcam.asyncio.IDataToSendTreatment;
+import com.ipcam.asyncio.ISender;
 import com.ipcam.helper.AsyncExecutor;
-import com.ipcam.internalevent.IInternalEventInfo;
-import com.ipcam.internalevent.InternalEvent;
-import com.ipcam.mailsender.IDataToSendTreatment;
 
-public class ResultReporterForInternalEvent<TDataToSend> implements IDataToSendTreatment<TDataToSend>
+public class FunctionsForInternalEvent<TDataToSend> implements IDataToSendTreatment<TDataToSend>
 {
 	private final String TAG = "AsyncMessageSender";
 	private AsyncExecutor<IInternalEventInfo> resultHandler = null;
 
-	public ResultReporterForInternalEvent(AsyncExecutor<IInternalEventInfo> r)
+	public FunctionsForInternalEvent(AsyncExecutor<IInternalEventInfo> r)
 	{
 		resultHandler = r;
 	}

@@ -8,14 +8,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
+import com.ipcam.asyncio.IIOStreamProvider;
+import com.ipcam.asyncio.ISender;
 import com.ipcam.internalevent.IInternalEventInfo;
 
 import android.util.Base64;
@@ -26,7 +24,6 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 	private final String TAG = "SMTPSender";
 	
 	private SMTPParameters mySMTPparams = null;
-	private IInternalEventInfo letter = null;
 	private boolean eraseFileAfterSuccessfulSending = false;
     private IIOStreamProvider ioStreamProvider = null; 
 
@@ -36,7 +33,6 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 	}  
     public void prepareSend(IInternalEventInfo letterToSend_)
     {
-    	letter = letterToSend_;
     }
 	@Override
 	public void injectIOStreamProvider(IIOStreamProvider iosp)
@@ -50,7 +46,6 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 		DataOutputStream os = null;
 		DataInputStream is = null;
 		String filePathToSend = null;
-		InetSocketAddress InetAddrConnTo = null;
 
     	Log.d(TAG, "SMTPSender: sendLetter started, creating FSM");
 		SMTP_FSM smtp_fsm = new SMTP_FSM(mySMTPparams, letterToSend_);

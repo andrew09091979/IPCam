@@ -1,6 +1,6 @@
-package com.ipcam.mailsender;
+package com.ipcam.asyncio;
 
-import com.ipcam.mailsender.ISender.SEND_RESULT;
+import com.ipcam.asyncio.ISender.SEND_RESULT;
 
 public interface IDataToSendTreatment<TDataToSend>
 {

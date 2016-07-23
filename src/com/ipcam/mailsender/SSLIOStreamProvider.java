@@ -1,7 +1,5 @@
 package com.ipcam.mailsender;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,7 +11,8 @@ import javax.net.ssl.SSLSocketFactory;
 
 import android.util.Log;
 
-import com.ipcam.mailsender.ISender.SEND_RESULT;
+import com.ipcam.asyncio.IIOStreamProvider;
+import com.ipcam.asyncio.ISender.SEND_RESULT;
 
 public class SSLIOStreamProvider implements IIOStreamProvider
 {
@@ -98,38 +97,41 @@ public class SSLIOStreamProvider implements IIOStreamProvider
 	}
     private void connect()
     {
-        try
-        {
-			Log.d(TAG,"SSLIOStreamProvider: connect started");
-
-			inetAddrConnTo = new InetSocketAddress(host, port);
-	        SSLSocketFactory factory=(SSLSocketFactory) SSLSocketFactory.getDefault();
-	        sslsocket=(SSLSocket) factory.createSocket();
-
-	        if (sslsocket != null)
+		synchronized (lock)
+		{
+	        try
 	        {
-	        	Log.d(TAG, "SSLIOStreamProvider: sslsocket is not null");
-	        	sslsocket.setUseClientMode(true);
-	        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.connect");
-	            sslsocket.connect(inetAddrConnTo, CONN_TIMEOUT);
-	        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.getOutputStream");
-	            outputStream = sslsocket.getOutputStream();
-	        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.getInputStream");
-	            inputStream = sslsocket.getInputStream();
-	            sslsocket.setSoTimeout(SO_TIMEOUT);
+				Log.d(TAG,"SSLIOStreamProvider: connect started");
+	
+				inetAddrConnTo = new InetSocketAddress(host, port);
+		        SSLSocketFactory factory=(SSLSocketFactory) SSLSocketFactory.getDefault();
+		        sslsocket=(SSLSocket) factory.createSocket();
+	
+		        if (sslsocket != null)
+		        {
+		        	Log.d(TAG, "SSLIOStreamProvider: sslsocket is not null");
+		        	sslsocket.setUseClientMode(true);
+		        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.connect");
+		            sslsocket.connect(inetAddrConnTo, CONN_TIMEOUT);
+		        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.getOutputStream");
+		            outputStream = sslsocket.getOutputStream();
+		        	Log.d(TAG, "SSLIOStreamProvider: calling sslsocket.getInputStream");
+		            inputStream = sslsocket.getInputStream();
+		            sslsocket.setSoTimeout(SO_TIMEOUT);
+		        }
 	        }
-        }
-        catch(UnknownHostException e)
-        {
-			e.printStackTrace();
-            outputStream = null;
-            inputStream = null;
-        }
-        catch(IOException e)
-        {
-			e.printStackTrace();
-            outputStream = null;
-            inputStream = null;
-        }
+	        catch(UnknownHostException e)
+	        {
+				e.printStackTrace();
+	            outputStream = null;
+	            inputStream = null;
+	        }
+	        catch(IOException e)
+	        {
+				e.printStackTrace();
+	            outputStream = null;
+	            inputStream = null;
+	        }
+		}
     }
 }

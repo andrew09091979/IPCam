@@ -1,4 +1,4 @@
-package com.ipcam.mailsender;
+package com.ipcam.asyncio;
 
 import java.io.InputStream;
 import java.io.OutputStream;

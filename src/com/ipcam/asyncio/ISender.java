@@ -1,4 +1,5 @@
-package com.ipcam.mailsender;
+package com.ipcam.asyncio;
+
 
 public interface ISender<T>
 {

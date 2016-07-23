@@ -1,7 +1,8 @@
-package com.ipcam.mailsender;
+package com.ipcam.asyncio;
 
 import android.util.Log;
 
+import com.ipcam.asyncio.ISender.SEND_RESULT;
 import com.ipcam.helper.AsyncExecutor;
 
 public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncExecutor<TDataToSend>

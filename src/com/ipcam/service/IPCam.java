@@ -17,18 +17,18 @@ import com.example.ipcam.R;
 import com.ipcam.adminconsole.ConnectionHandler;
 import com.ipcam.adminconsole.NetStateReceiver;
 import com.ipcam.adminconsole.ServerConnector;
+import com.ipcam.asyncio.AsyncMessageSender;
+import com.ipcam.asyncio.ISender;
 import com.ipcam.battery.BatteryStatusReceiver;
 import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.helper.ServiceStartIntentFactory;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.helper.FileName;
+import com.ipcam.internalevent.FunctionsForInternalEvent;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;
-import com.ipcam.mailsender.AsyncMessageSender;
-import com.ipcam.mailsender.ISender;
 import com.ipcam.mailsender.SMTPParameters;
 import com.ipcam.mailsender.SMTPSender;
-import com.ipcam.mailsender.ResultReporterForInternalEvent;
 import com.ipcam.mailsender.SSLIOStreamProvider;
 import com.ipcam.photo.CameraActivity;
 import com.ipcam.photo.Photographer;
@@ -353,7 +353,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         	////writeToLog("startAll: creating MailSenderImpl");
     		ISender<IInternalEventInfo> smtpSender = new SMTPSender(smtpParameters);
     		smtpSender.injectIOStreamProvider(new SSLIOStreamProvider(smtpParameters.getSmtpServerAddr(), smtpParameters.getSmtpServerPort()));
-    		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new ResultReporterForInternalEvent<IInternalEventInfo>(this),
+    		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new FunctionsForInternalEvent<IInternalEventInfo>(this),
     				                                                                        smtpSender);
     	}
     	if (photographerInst != null)
