@@ -15,6 +15,7 @@ import java.util.Map;
 import com.ipcam.asyncio.IIOStreamProvider;
 import com.ipcam.asyncio.ISender;
 import com.ipcam.internalevent.IInternalEventInfo;
+import com.ipcam.internalevent.InternalEvent;
 
 import android.util.Base64;
 import android.util.Log;
@@ -95,10 +96,17 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 
 	        	do
 	        	{
-	        		byte [] msg = smtp_fsm.GetMessage();
-	        		Log.d(TAG, "writing " + Integer.toString(msg.length) + " bytes");
-	        		os.write(msg);
+	        		byte [] msg = smtp_fsm.getMessage();
 
+	        		if (msg != null)
+	        		{
+	        			Log.d(TAG, "writing " + Integer.toString(msg.length) + " bytes");
+	        		    os.write(msg);
+	        		}
+	        		else
+	        		{
+	        			Log.d(TAG, "nothing to send msg is null");
+	        		}
 	        		if (smtp_fsm.needToReadAnswer())
 	        		{
 	        		    avail = is.read(bfr);
@@ -107,7 +115,7 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 	        		    if (avail > 0)
 	        			    Log.d(TAG, new String(bfr, 0, avail));
 
-	        		    processingResult = smtp_fsm.ProcessAnswer(bfr);
+	        		    processingResult = smtp_fsm.processAnswer(bfr);
 	        		}
 	        	}
 	        	while(processingResult == 0);
@@ -140,6 +148,7 @@ public class SMTPSender implements ISender<IInternalEventInfo>
 			Log.e(TAG, "ioStreamProvider is null, can't call closeAll");
 		}
         Log.d(TAG, "sendLetter return=" + result.toString());
+        letterToSend_.setInternalEvent(InternalEvent.TASK_COMPLETE);
 
 		return result;
 	}
@@ -225,7 +234,7 @@ class SMTP_FSM
 		SMTP_STATE_INFO_MAP.put(STATE.QUIT,       new SMTP_STATE_INFO(STATE.EHLO, 250));
 	}
 
-	public byte [] GetMessage()
+	public byte [] getMessage()
 	{
 		byte [] msgBytes = null;
 		
@@ -298,8 +307,8 @@ class SMTP_FSM
 		}
 		return msgBytes;
 	}
-	
-	public int ProcessAnswer(byte msg[])
+
+	public int processAnswer(byte msg[])
 	{
 		int res = 0;
 		int serverResCode = Integer.parseInt(new String(msg,0, 3));

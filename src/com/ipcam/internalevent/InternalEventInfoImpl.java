@@ -3,6 +3,8 @@ package com.ipcam.internalevent;
 import java.util.Vector;
 import java.util.Random;
 
+import com.ipcam.asyncio.AsyncExecutor;
+import com.ipcam.asyncio.AsyncMessageSender;
 import com.ipcam.task.ITask;
 
 import android.os.PowerManager.WakeLock;
@@ -20,7 +22,7 @@ public class InternalEventInfoImpl implements IInternalEventInfo
     private WakeLock wakeLock = null;
     private int parameter = 0;
     private Object object = null;
-    private ITask<IInternalEventInfo> resNotifier = null;
+    private AsyncExecutor<IInternalEventInfo> resNotifier = null;
 
     public InternalEventInfoImpl(InternalEvent ie)
     {
@@ -126,12 +128,12 @@ public class InternalEventInfoImpl implements IInternalEventInfo
 		return object;
 	}
 	@Override
-	public void setResultNotifier(ITask<IInternalEventInfo> t)
+	public void setResultNotifier(AsyncExecutor<IInternalEventInfo> t)
 	{
 		resNotifier = t;
 	}
 	@Override
-	public ITask<IInternalEventInfo> getResultNotifier()
+	public AsyncExecutor<IInternalEventInfo> getResultNotifier()
 	{
 		return resNotifier;
 	}

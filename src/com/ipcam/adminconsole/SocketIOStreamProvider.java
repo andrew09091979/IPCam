@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 import android.util.Log;
 
@@ -20,6 +21,15 @@ public class SocketIOStreamProvider implements IIOStreamProvider
     public SocketIOStreamProvider(Socket sock)
     {
     	socket = sock;
+
+    	try
+    	{
+			socket.setSoTimeout(0);
+		}
+    	catch (SocketException e)
+    	{
+			e.printStackTrace();
+		}
     }
 	@Override
 	public OutputStream getOutputStream()

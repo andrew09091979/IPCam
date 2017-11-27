@@ -11,16 +11,18 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimerTask;
 
 import com.example.ipcam.R;
+import com.ipcam.adminconsole.AdminConsoleSender;
 import com.ipcam.adminconsole.ConnectionHandler;
 import com.ipcam.adminconsole.NetStateReceiver;
 import com.ipcam.adminconsole.ServerConnector;
+import com.ipcam.adminconsole.SocketIOStreamProvider;
+import com.ipcam.asyncio.AsyncExecutor;
 import com.ipcam.asyncio.AsyncMessageSender;
+import com.ipcam.asyncio.IIOStreamProvider;
 import com.ipcam.asyncio.ISender;
 import com.ipcam.battery.BatteryStatusReceiver;
-import com.ipcam.helper.AsyncExecutor;
 import com.ipcam.helper.ServiceStartIntentFactory;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.helper.FileName;
@@ -30,7 +32,6 @@ import com.ipcam.internalevent.InternalEventInfoImpl;
 import com.ipcam.mailsender.SMTPParameters;
 import com.ipcam.mailsender.SMTPSender;
 import com.ipcam.mailsender.SSLIOStreamProvider;
-import com.ipcam.photo.CameraActivity;
 import com.ipcam.photo.Photographer;
 import com.ipcam.soundplayer.SoundPlayerImpl;
 import com.ipcam.soundrecorder.SoundRecorderImpl;
@@ -46,7 +47,6 @@ import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
@@ -72,7 +72,6 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     private IntentFilter netIntentFilter = null;
     
     private Context context = null;
-    private Resources resources = null;
     private AlarmManager alarmManager = null;
     private PowerManager powerManager = null;
     private WakeLock screenLock = null;
@@ -84,10 +83,10 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     private AsyncExecutor<IInternalEventInfo> mailSenderInst = null;
     private AsyncExecutor<IInternalEventInfo> soundPlayerInst = null;
     private AsyncExecutor<IInternalEventInfo> soundRecorderInst = null;
+    private AsyncExecutor<IInternalEventInfo> adminConsole = null;
     private ITask<IInternalEventInfo> batteryStatusReceiver = null;
     private SensorsReceiver sensorsReceiver = null;
     private static AsyncExecutor<IInternalEventInfo> internalEventHandler = null;
-    private HashMap<Integer, TimerTask> job = null;
     private int pictureQualityIndex = 3;
     private int shotAlarmPeriod = 10;
     private String alarmAudioFile = "/mnt/sdcard/MyCameraApp/siren.mp3";
@@ -98,10 +97,10 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     private int debugWakeLockAcquired = 0;
     private String debugStartedFrom = null;
     private UncaughtExceptionHandler debugUEH = null;
-
+/*
 	private File log = null;
     private FileOutputStream logfos = null;
-
+*/
     public IPCam()
     {
         debugUEH = new IPCamUncaughtExceptionHandler();
@@ -113,7 +112,6 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     }
 	public void activate(Intent intent, Resources res, Context cont)
 	{
-		resources = res;
 		context = cont;
 		readStringsFromResources(res);
 
@@ -208,6 +206,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
             internalEventHandlingMethods = null;
         if (internalEventHandler != null)
             internalEventHandler = null;
+/*
         if (logfos != null)
         {
 			try
@@ -219,6 +218,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 				e.printStackTrace();
 			}
         }
+*/
     }
     private Map<String, String> readSettingsFromIntent(Intent intent)
     {
@@ -256,8 +256,12 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
     	{
 			internalEventHandlingMethods.put(InternalEvent.NEED_TO_COLLECT_DATA,
 					IPCam.class.getMethod("handleNeedToCollectData", new Class[]{IInternalEventInfo.class}));
+			internalEventHandlingMethods.put(InternalEvent.NEED_TO_RECORD_VIDEO,
+					IPCam.class.getMethod("handleNeedToRecordVideo", new Class[]{IInternalEventInfo.class}));
 			internalEventHandlingMethods.put(InternalEvent.NEED_TO_RECORD_AMBIENT_SOUND,
 					IPCam.class.getMethod("handleNeedToRecordAmbientSound", new Class[]{IInternalEventInfo.class}));
+			internalEventHandlingMethods.put(InternalEvent.GET_CURRENT_VALUES,
+					IPCam.class.getMethod("handleGetCurrentValues", new Class[]{IInternalEventInfo.class}));
 			internalEventHandlingMethods.put(InternalEvent.RENEW_BATTERY_LEVEL,
 					IPCam.class.getMethod("handleRenewBatteryLevel", new Class[]{IInternalEventInfo.class}));				
 			internalEventHandlingMethods.put(InternalEvent.NO_BROADCAST_FROM_PHOTO_ACTIVITY,
@@ -273,7 +277,9 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 			internalEventHandlingMethods.put(InternalEvent.TASK_COMPLETE,
 					IPCam.class.getMethod("handleTaskComplete", new Class[]{IInternalEventInfo.class}));
 			internalEventHandlingMethods.put(InternalEvent.ADMIN_CONNECTED,
-					IPCam.class.getMethod("handleAdminConnected", new Class[]{IInternalEventInfo.class}));				
+					IPCam.class.getMethod("handleAdminConnected", new Class[]{IInternalEventInfo.class}));	
+			internalEventHandlingMethods.put(InternalEvent.STOP_ASYNC_EXECUTOR,
+					IPCam.class.getMethod("handleStopAsyncExecutor", new Class[]{IInternalEventInfo.class}));
 //				Log.e(TAG, "IPCamService: onCreate internalEventHandlingMethods is " + internalEventHandlingMethods.toString());
 		}
     	catch (NoSuchMethodException e)
@@ -353,8 +359,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
         	////writeToLog("startAll: creating MailSenderImpl");
     		ISender<IInternalEventInfo> smtpSender = new SMTPSender(smtpParameters);
     		smtpSender.injectIOStreamProvider(new SSLIOStreamProvider(smtpParameters.getSmtpServerAddr(), smtpParameters.getSmtpServerPort()));
-    		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new FunctionsForInternalEvent<IInternalEventInfo>(this),
-    				                                                                        smtpSender);
+    		mailSenderInst = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new FunctionsForInternalEvent(), smtpSender, this);
     	}
     	if (photographerInst != null)
     	{
@@ -534,7 +539,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		addServiceInfo(info);
 		info.setParameter(3);
 
-		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
+		AsyncExecutor<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -545,7 +550,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		else
 		{
-			resultNotifier.performTask(info);
+			resultNotifier.executeAsync(info);
 		}
     }
 	public void handleNeedToNotifyUser(IInternalEventInfo info)
@@ -554,7 +559,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 
 		addServiceInfo(info);
 		info.setParameter(5);
-		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
+		AsyncExecutor<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -565,7 +570,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		else
 		{
-			resultNotifier.performTask(info);
+			resultNotifier.executeAsync(info);
 		}
 	}
 	public void handleNeedToNotifyUserUrgently(IInternalEventInfo info)
@@ -575,7 +580,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		addServiceInfo(info);
 		info.setParameter(5);
 
-		ITask<IInternalEventInfo> resultNotifier = info.getResultNotifier();
+		AsyncExecutor<IInternalEventInfo> resultNotifier = info.getResultNotifier();
 
 		if (resultNotifier == null)
 		{
@@ -586,7 +591,7 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		}
 		else
 		{
-			resultNotifier.performTask(info);
+			resultNotifier.executeAsync(info);
 		}
         if (soundPlayerInst != null)
         {
@@ -668,9 +673,18 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
       	Socket sock = (Socket)info.getObject();
       	Log.d(TAG, "IPCam: handleAdminConnected info message = " + info.getMessage());
 
-      	Log.d(TAG, "IPCam: handleAdminConnected: starting ConnectionHandler");      		
+      	Log.d(TAG, "IPCam: handleAdminConnected: starting ConnectionHandler");
+/*
 		ConnectionHandler ch = new ConnectionHandler(sock, this);
 		ch.start();
+*/
+
+      	IIOStreamProvider sockIOProvider = new SocketIOStreamProvider(sock);
+   		ISender<IInternalEventInfo> adminConsoleSender = new AdminConsoleSender();
+   		adminConsoleSender.injectIOStreamProvider(new SocketIOStreamProvider(sock));
+   		adminConsole = new AsyncMessageSender<IInternalEventInfo, IInternalEventInfo>(new FunctionsForInternalEvent(), adminConsoleSender, this);
+        adminConsole.executeAsync(info);
+
 	}
 	public void handleNeedToRecordAmbientSound(IInternalEventInfo info)
 	{
@@ -679,6 +693,24 @@ public class IPCam extends AsyncExecutor<IInternalEventInfo>
 		if (soundRecorderInst != null)
 		{
 			soundRecorderInst.executeAsync(info);
+		}
+	}
+	public void handleNeedToRecordVideo(IInternalEventInfo info)
+	{
+		Log.d(TAG, "IPCam: handleNeedToRecordVideo");
+	}
+	public void handleGetCurrentValues(IInternalEventInfo info)
+	{
+		Log.d(TAG, "IPCam: handleGetCurrentValues");
+	}
+	public void handleStopAsyncExecutor(IInternalEventInfo info)
+	{
+		Log.d(TAG, "IPCam: handleStopAsyncExecutor");
+		AsyncExecutor<IInternalEventInfo> asyncExecutorToStop = info.getResultNotifier();
+
+		if (asyncExecutorToStop != null)
+		{
+			asyncExecutorToStop.stop();
 		}
 	}
 /*

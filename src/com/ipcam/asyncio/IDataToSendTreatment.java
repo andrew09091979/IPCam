@@ -1,9 +1,13 @@
 package com.ipcam.asyncio;
 
-import com.ipcam.asyncio.ISender.SEND_RESULT;
+import com.ipcam.internalevent.InternalEvent;
 
-public interface IDataToSendTreatment<TDataToSend>
+public interface IDataToSendTreatment<TDataToSend, TDataToReportResult>
 {
-	void reportResult(TDataToSend data, SEND_RESULT result);
 	void addString(TDataToSend data, String str);
+	void setResultFlag(TDataToSend data, boolean res);
+	void setResultNotifier(TDataToSend data, AsyncExecutor<TDataToSend> o);
+	void setEventType(TDataToSend data, InternalEvent ev);
+	InternalEvent getEventType(TDataToSend data);
+	TDataToReportResult convertIntoDataToReport(TDataToSend data);
 }

@@ -1,22 +1,23 @@
 package com.ipcam.asyncio;
 
 import android.util.Log;
-
-import com.ipcam.asyncio.ISender.SEND_RESULT;
-import com.ipcam.helper.AsyncExecutor;
+import com.ipcam.asyncio.AsyncExecutor;
 
 public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncExecutor<TDataToSend>
 {
-	private final String TAG = "AsyncMessageSender"; 
+	private final String TAG = "AdminConsoleSender";//"AsyncMessageSender"; 
     private ISender<TDataToSend> sender = null;
     private int networkFailCounter = 0;
     private int serverFailCounter = 0;
-    private IDataToSendTreatment<TDataToSend> dataTreatment = null;
+    private IDataToSendTreatment<TDataToSend, TDataToReportResult> dataTreatment = null;
+    private AsyncExecutor<TDataToReportResult> resultHandler = null;
 
-    public AsyncMessageSender(IDataToSendTreatment<TDataToSend> dt, ISender<TDataToSend> ls)
+    public AsyncMessageSender(IDataToSendTreatment<TDataToSend, TDataToReportResult> dt, ISender<TDataToSend> ls,
+    		                   AsyncExecutor<TDataToReportResult> r)
     {
     	dataTreatment = dt;
     	sender = ls;
+    	resultHandler = r;
     }
     @Override
     public void executor(TDataToSend info)
@@ -65,7 +66,7 @@ public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncE
 
         if (res == ISender.SEND_RESULT.SUCCESS)
         {
-        	Log.d(TAG, "AsyncMessageSender: mail successfully sent");
+        	Log.d(TAG, "AsyncMessageSender: successfully sent");
         }
         else if (res  == ISender.SEND_RESULT.SERVER_ERROR)
         {
@@ -80,7 +81,11 @@ public class AsyncMessageSender<TDataToSend, TDataToReportResult> extends AsyncE
 
         if ((dataTreatment != null) && (infoForLetter != null)) 
         {
-            dataTreatment.reportResult(infoForLetter, res);//report sending result to IPCam
+        	//dataTreatment.setResultFlag(infoForLetter, (res == ISender.SEND_RESULT.SUCCESS));
+        	Log.d(TAG, "AsyncMessageSender: reporting result");
+        	dataTreatment.setResultNotifier(infoForLetter, this);
+        	TDataToReportResult reportRes = dataTreatment.convertIntoDataToReport(infoForLetter);
+        	resultHandler.executeAsync(reportRes);
         }
         else
         {

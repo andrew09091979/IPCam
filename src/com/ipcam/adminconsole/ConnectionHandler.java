@@ -13,14 +13,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.ipcam.helper.AsyncExecutor;
+import com.ipcam.asyncio.AsyncExecutor;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;
@@ -148,7 +145,6 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
     }
 	private String receiveCommand()
 	{
-		int errVal = 0;
 		boolean res = false;
 		boolean finish = false;
 		byte msg_head[] = new byte[3];
@@ -254,15 +250,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 				break;
 			}
 		}
-		
-		if(res)
-		{
-			errVal=0;
-		}
-		else
-		{
-			errVal=-1;
-		}
+
 		String cmd = null;
 
         if (msg != null)
@@ -484,7 +472,7 @@ public class ConnectionHandler extends Thread implements ITask<IInternalEventInf
 	    	IInternalEventInfo info = new InternalEventInfoImpl(InternalEvent.NEED_TO_RECORD_AMBIENT_SOUND);
 	    	info.setMessage("Recording sound per admin demand");
 	    	info.setHeadline("Recording sound per admin demand");
-	    	info.setResultNotifier(this);
+	    	info.setResultNotifier(null);
 			info.setParameter(recordLength);
 	    	eventHandler.executeAsync(info);
 	    }

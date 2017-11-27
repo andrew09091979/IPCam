@@ -1,6 +1,6 @@
 package com.ipcam.internalevent;
 
-import com.ipcam.task.ITask;
+import com.ipcam.asyncio.AsyncExecutor;
 
 import android.os.PowerManager.WakeLock;
 
@@ -13,13 +13,13 @@ public interface IInternalEventInfo
     public void setMessage(String message);
     public void setWakeLock(WakeLock wakelock);
     public void setObject(Object obj);
-    public void setResultNotifier(ITask<IInternalEventInfo> t);
+    public void setResultNotifier(AsyncExecutor<IInternalEventInfo> t);
     public void addFile(String fullPath);
     public void removeAllFiles();
     public void setParameter(int parameter);
     public String getHeadline();
     public String getMessage();
-    public ITask<IInternalEventInfo> getResultNotifier();
+    public AsyncExecutor<IInternalEventInfo> getResultNotifier();
     public void concatToMessage(String str);
     public WakeLock getWakeLock();
     public String getFile(int fileNum);

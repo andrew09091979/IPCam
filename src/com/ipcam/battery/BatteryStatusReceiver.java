@@ -3,7 +3,7 @@ package com.ipcam.battery;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.ipcam.helper.AsyncExecutor;
+import com.ipcam.asyncio.AsyncExecutor;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;

@@ -5,7 +5,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-import com.ipcam.helper.AsyncExecutor;
+import com.ipcam.asyncio.AsyncExecutor;
 import com.ipcam.internalevent.IInternalEventInfo;
 import com.ipcam.internalevent.InternalEvent;
 import com.ipcam.internalevent.InternalEventInfoImpl;
@@ -24,7 +24,6 @@ public class NetStateReceiver extends BroadcastReceiver
 
 	private AsyncExecutor<IInternalEventInfo> eventHandler = null;
 	private IInternalEventInfo info = null;
-    private int currentState = 0;
     private InetAddress currentAddress = null;
 
 	public NetStateReceiver(AsyncExecutor<IInternalEventInfo> evh)
@@ -58,7 +57,6 @@ public class NetStateReceiver extends BroadcastReceiver
 					+ ", available: " + mAvailable
 					+ ", state: " + state.toString());
 			    
-				NetworkInterface networkInterfaceToUse = null;
 				InetAddress addressToUse = getWorkingInetAddress();
 
 				if (addressToUse != null)
@@ -81,7 +79,10 @@ public class NetStateReceiver extends BroadcastReceiver
 			    				        "\nstate = " + state.toString());
 			    		info.setObject(currentAddress);
 			    		if (eventHandler != null)
+			    		{
+			    			Log.d(TAG, "Sending NETWORK_CONNECTED message to ipcam");
 			    			eventHandler.executeAsync(info);
+			    		}
 					}
 					else
 						Log.d(TAG, "no need to restart server connector for the same address");
@@ -99,7 +100,6 @@ public class NetStateReceiver extends BroadcastReceiver
 
 		    	Log.d("NetStateReceiver", "no connected networks found");
 		    	eventHandler.executeAsync(info);
-		    	currentState = 0;
 		    }
 		}
 		else
